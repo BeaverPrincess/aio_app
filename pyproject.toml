@@ -1,0 +1,16 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["src", "run.py"]
+exclude = [".venv", "migrations"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
+typeCheckingMode = "standard"
+reportMissingImports = "error"
