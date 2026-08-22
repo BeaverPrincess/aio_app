@@ -1,24 +1,15 @@
-import os
 from logging.config import fileConfig
-from pathlib import Path
 
 from alembic import context
-from dotenv import load_dotenv
-from sqlalchemy import URL, engine_from_config, pool
+from sqlalchemy import engine_from_config, pool
+from src.aio_fitness_app.database import Base
+from src.aio_fitness_app.settings import DatabaseSettings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
-database_url = URL.create(
-    drivername="postgresql+psycopg",
-    username=os.environ["POSTGRES_USER"],
-    password=os.environ["POSTGRES_PASSWORD"],
-    host=os.environ["POSTGRES_HOST"],
-    port=int(os.environ["POSTGRES_PORT"]),
-    database=os.environ["POSTGRES_DB"],
-)
-config.set_main_option("sqlalchemy.url", database_url.render_as_string(hide_password=False))
+database_url = DatabaseSettings._get_database_url()
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -29,7 +20,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
