@@ -8,7 +8,7 @@ from src.aio_fitness_app.settings import DatabaseSettings
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-database_url = DatabaseSettings._get_database_url()
+database_url = DatabaseSettings.from_env().url
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.

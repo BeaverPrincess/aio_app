@@ -32,15 +32,13 @@ class DatabaseSettings:
             password=os.environ["POSTGRES_PASSWORD"],
         )
 
-    @classmethod
-    def _get_database_url(cls) -> str:
-        """Get the database URL from environment variables."""
-        settings = cls.from_env()
+    @property
+    def url(self) -> str:
         return URL.create(
             drivername="postgresql+psycopg",
-            username=settings.username,
-            password=settings.password,
-            host=settings.host,
-            port=settings.port,
-            database=settings.database,
+            username=self.username,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            database=self.database,
         ).render_as_string(hide_password=False)

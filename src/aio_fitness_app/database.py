@@ -1,3 +1,4 @@
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 
@@ -14,3 +15,6 @@ class Base(DeclarativeBase):
     """Shared typed ORM base for all models"""
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+
+
+db = SQLAlchemy(model_class=Base)
