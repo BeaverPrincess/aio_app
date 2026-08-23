@@ -1,36 +1,38 @@
 # AIO Fitness App
 
-A web-based meal tracker for recording ingredients and meals, then viewing their nutritional information. The planned stack is Flask, SQLAlchemy, PostgreSQL, and Jinja templates.
+A web-based meal tracker for recording ingredients and meals, then viewing their nutritional information. It uses Flask, Flask-SQLAlchemy, PostgreSQL, Alembic, and Jinja templates.
 
-The application itself is not implemented yet. At this stage, the repository runs PostgreSQL and pgAdmin locally through Docker.
+The application currently provides a health endpoint. Meal-tracker business logic and database tables have not been implemented yet.
 
 ## Architecture and workflow
 
-The browser will communicate with a Flask application. Flask will use SQLAlchemy to read and write PostgreSQL data, while Alembic records schema changes as reviewed migrations. pgAdmin is a separate browser tool for viewing and directly editing the local database when needed.
-
 ```text
-Browser -> Flask -> SQLAlchemy -> PostgreSQL
-                         ^
-                     Alembic migrations
+Browser -> Flask -> Flask-SQLAlchemy -> PostgreSQL
+                                      ^
+                                  Alembic migrations
 ```
+
+Flask serves HTTP requests. Flask-SQLAlchemy provides Flask-aware SQLAlchemy sessions. Alembic creates and evolves the PostgreSQL schema through reviewed migrations.
 
 ## Run
 
-Start PostgreSQL and pgAdmin in the background:
+Start PostgreSQL and pgAdmin:
 
 ```powershell
 docker compose up -d
 ```
 
-Check that both services are running:
+Run the Flask application:
 
 ```powershell
-docker compose ps
+.\.venv\Scripts\flask.exe --app src.aio_fitness_app:create_app run --debug
 ```
+
+Check the application at `http://127.0.0.1:5000/health`.
 
 Open pgAdmin at `http://localhost:5050`.
 
-Stop the services while keeping their database data:
+Stop the Docker services while keeping their database data:
 
 ```powershell
 docker compose down
