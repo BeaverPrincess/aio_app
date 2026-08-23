@@ -6,19 +6,22 @@ repos:
         entry: ruff check --fix
         language: system
         types: [python]
-        
+        stages: [pre-commit]
+
       - id: ruff-format
         name: ruff format
         entry: ruff format
         language: system
         types: [python]
+        stages: [pre-commit]
 
       - id: pyright
         name: pyright
         entry: pyright
         language: system
         pass_filenames: false
-      
+        stages: [pre-commit]
+
       - id: pytest
         name: pytest
         entry: .venv/Scripts/python.exe -m pytest
