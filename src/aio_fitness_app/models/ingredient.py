@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.aio_fitness_app.database import db
+
+from aio_fitness_app.database import db
 
 if TYPE_CHECKING:
     from .dish_ingredient import DishIngredient

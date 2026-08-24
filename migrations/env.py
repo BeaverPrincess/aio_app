@@ -2,9 +2,10 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-from src.aio_fitness_app import models  # noqa: F401
-from src.aio_fitness_app.database import Base
-from src.aio_fitness_app.settings import DatabaseSettings
+
+from aio_fitness_app import models  # noqa: F401
+from aio_fitness_app.database import Base
+from aio_fitness_app.settings import DatabaseSettings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

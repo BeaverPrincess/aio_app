@@ -1,8 +1,9 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
-from src.aio_fitness_app.services.usda_food_client import UsdaFoodClient
-from src.aio_fitness_app.settings import UsdaFoodApiSettings
+
+from aio_fitness_app.services.usda_food_client import UsdaFoodClient
+from aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class TestUsdaFoodClient:
@@ -14,7 +15,7 @@ class TestUsdaFoodClient:
         client = UsdaFoodClient(UsdaFoodApiSettings(api_str="test-key"))
 
         with patch(
-            "src.aio_fitness_app.services.usda_food_client.requests.get",
+            "aio_fitness_app.services.usda_food_client.requests.get",
             autospec=True,
             return_value=response,
         ) as mock_get:

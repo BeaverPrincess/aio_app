@@ -10,9 +10,9 @@ from requests.exceptions import (
     RequestException,
     Timeout,
 )
-from src.aio_fitness_app.settings import UsdaFoodApiSettings
 
 from aio_fitness_app.error import UsdaFoodApiError, UsdaFoodApiRateLimitError
+from aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class UsdaFoodClient:

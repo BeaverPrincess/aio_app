@@ -25,7 +25,8 @@ docker compose up -d
 Run the Flask application:
 
 ```powershell
-.\.venv\Scripts\flask.exe --app src.aio_fitness_app:create_app run --debug
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\flask.exe --app aio_fitness_app:create_app run --debug
 ```
 
 Check the application at `http://127.0.0.1:5000/health`.

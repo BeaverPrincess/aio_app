@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from decimal import ROUND_HALF_UP, Decimal
 
-from src.aio_fitness_app.dto.ingredient_dto import IngredientImportData
+from aio_fitness_app.dto.ingredient_dto import IngredientImportData
 
 
 class UsdaFoodMapper:

@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from src.aio_fitness_app.services.usda_food_mapper import (
+from aio_fitness_app.services.usda_food_mapper import (
     IngredientImportData,
     UsdaFoodMapper,
 )
