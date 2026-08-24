@@ -42,3 +42,16 @@ class DatabaseSettings:
             port=self.port,
             database=self.database,
         ).render_as_string(hide_password=False)
+
+
+@dataclass(frozen=True, slots=True)
+class UsdaFoodApiSettings:
+    """USDA Food API settings for the application."""
+
+    api_str: str
+
+    @classmethod
+    def from_env(cls) -> UsdaFoodApiSettings:
+        """Load USDA Food API settings from environment variables."""
+        load_dotenv(PROJECT_ROOT / ".env")
+        return cls(api_str=os.environ["USDA_FOOD_API_KEY"])
