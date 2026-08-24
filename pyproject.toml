@@ -7,7 +7,7 @@ src = ["src"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pyright]
-include = ["src", "tests"]
+include = ["src"]
 exclude = [".venv", "migrations"]
 venvPath = "."
 venv = ".venv"
@@ -16,4 +16,5 @@ typeCheckingMode = "standard"
 reportMissingImports = "error"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src/aio_fitness_app/tests"]
+pythonpath = ["src"]
