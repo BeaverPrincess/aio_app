@@ -6,7 +6,7 @@ from src.aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class TestUsdaFoodClient:
-    def test_fetch_foundation_foods_page_returns_foods(self) -> None:
+    def test_fetch_foundation_foods_page__returns_foods(self) -> None:
         """It requests one sorted Foundation Foods page and returns its records."""
         result = [{"fdcId": 123, "description": "Example food", "foodNutrients": []}]
         response = Mock()
@@ -38,7 +38,7 @@ class TestUsdaFoodClient:
         assert response.raise_for_status.call_count == 1
         assert response.json.call_count == 1
 
-    def test_fetch_foundation_foods_page_rejects_page_zero(self) -> None:
+    def test_fetch_foundation_foods_page__rejects_page_zero(self) -> None:
         """It rejects a page number that USDA does not support."""
         client = UsdaFoodClient(UsdaFoodApiSettings(api_str="test-key"))
 
