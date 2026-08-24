@@ -16,6 +16,7 @@ class Ingredient(db.Model):
 
     __tablename__ = "ingredients"
     __table_args__ = (
+        CheckConstraint("fdc_id >= 0", name="check_fdc_id_non_negative"),
         CheckConstraint("calories_kcal_per_100g >= 0", name="check_calories_non_negative"),
         CheckConstraint("protein_g_per_100g >= 0", name="check_protein_non_negative"),
         CheckConstraint("carb_g_per_100g >= 0", name="check_carb_non_negative"),
@@ -23,7 +24,8 @@ class Ingredient(db.Model):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), unique=True)
+    fdc_id: Mapped[int] = mapped_column(unique=True)
+    name: Mapped[str] = mapped_column(String(255))
     calories_kcal_per_100g: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     protein_g_per_100g: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     carb_g_per_100g: Mapped[Decimal] = mapped_column(Numeric(10, 2))
