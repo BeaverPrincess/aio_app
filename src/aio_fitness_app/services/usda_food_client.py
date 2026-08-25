@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from http import HTTPStatus
 
 import requests
@@ -11,24 +12,36 @@ from requests.exceptions import (
     Timeout,
 )
 
+from aio_fitness_app.enum import UsdaNutritionCode
 from aio_fitness_app.error import UsdaFoodApiError, UsdaFoodApiRateLimitError
 from aio_fitness_app.settings import UsdaFoodApiSettings
 from shared_logging import AppLogger
 
 
 class UsdaFoodClient:
-    """Fetches foods pages from USDA FoodData Central"""
+    """Fetches food data from USDA FoodData Central."""
 
-    _API_URL = "https://api.nal.usda.gov/fdc/v1/foods/list"
+    _FOODS_LIST_URL = "https://api.nal.usda.gov/fdc/v1/foods/list"
+    _FOOD_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/food"
+    _FOODS_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/foods"
     _FOUNDATION_DATA_TYPE = "Foundation"
     _PAGE_SIZE = 200
     _REQUEST_TIMEOUT_SECONDS = 30
+    _DETAIL_FORMAT = "abridged"
+    _REQUIRED_NUTRIENTS = (
+        f"{UsdaNutritionCode.ENERGY.value},"
+        f"{UsdaNutritionCode.PROTEIN.value},"
+        f"{UsdaNutritionCode.FAT.value},"
+        f"{UsdaNutritionCode.CARB.value}"
+    )
 
     def __init__(self, settings: UsdaFoodApiSettings, verbose: bool = False) -> None:
         self._api_key = settings.api_str
         self._logger = AppLogger(verbose)
+        self._headers = {"Accept": "application/json"}
 
-    def fetch_foundation_foods_page(self, page_number: int) -> list[dict[str, object]]:
+    def fetch_foods_by_page(self, page_number: int) -> list[dict[str, object]]:
+        """Fetch one sorted page of USDA Foundation Foods."""
         if page_number < 1:
             raise ValueError("page_number must be at least 1.")
 
@@ -40,12 +53,61 @@ class UsdaFoodClient:
             "sortBy": "fdcId",
             "sortOrder": "asc",
         }
-        headers = {"Accept": "application/json"}
+        payload = self._fetch_payload(self._FOODS_LIST_URL, query_params)
+
+        return self._extract_food_items_from_payload(payload)
+
+    def fetch_food_by_fdc_id(self, fdc_id: int) -> dict[str, object]:
+        """Fetch one USDA food by its FDC ID."""
+        if isinstance(fdc_id, bool) or not isinstance(fdc_id, int) or fdc_id <= 0:
+            raise ValueError("fdc_id must be a positive integer.")
+
+        query_params = {
+            "api_key": self._api_key,
+            "format": self._DETAIL_FORMAT,
+            "nutrients": self._REQUIRED_NUTRIENTS,
+        }
+        payload = self._fetch_payload(
+            f"{self._FOOD_DETAILS_URL}/{fdc_id}",
+            query_params,
+        )
+
+        return self._extract_food_item_from_payload(payload)
+
+    def fetch_foods_by_fdc_ids(self, fdc_ids: list[int]) -> list[dict[str, object]]:
+        """Fetch up to 20 USDA foods by their FDC IDs."""
+        if not fdc_ids:
+            raise ValueError("fdc_ids must contain at least one FDC ID.")
+
+        if len(fdc_ids) > 20:
+            raise ValueError("fdc_ids must contain at most 20 FDC IDs.")
+
+        if any(
+            isinstance(fdc_id, bool) or not isinstance(fdc_id, int) or fdc_id <= 0
+            for fdc_id in fdc_ids
+        ):
+            raise ValueError("fdc_ids must contain only positive integers.")
+
+        query_params = {
+            "api_key": self._api_key,
+            "fdcIds": ",".join(str(fdc_id) for fdc_id in fdc_ids),
+            "format": self._DETAIL_FORMAT,
+            "nutrients": self._REQUIRED_NUTRIENTS,
+        }
+        payload = self._fetch_payload(self._FOODS_DETAILS_URL, query_params)
+
+        return self._extract_food_items_from_payload(payload)
+
+    def _fetch_payload(
+        self,
+        url: str,
+        query_params: Mapping[str, str | int],
+    ) -> object:
         try:
             response = requests.get(
-                url=self._API_URL,
+                url=url,
                 params=query_params,
-                headers=headers,
+                headers=self._headers,
                 timeout=self._REQUEST_TIMEOUT_SECONDS,
             )
             response.raise_for_status()
@@ -66,42 +128,45 @@ class UsdaFoodClient:
             self._logger.error(f"❌ {error_message}")
             raise UsdaFoodApiError(error_message) from None
         except RequestException:
-            message = "USDA request failed."
-            self._logger.error(f"❌ {message}")
-            raise UsdaFoodApiError(message) from None
+            error_message = "USDA request failed."
+            self._logger.error(f"❌ {error_message}")
+            raise UsdaFoodApiError(error_message) from None
 
         try:
-            payload: object = response.json()
+            return response.json()
         except JSONDecodeError:
             error_message = "USDA FoodData Central returned invalid JSON."
             self._logger.error(f"❌ {error_message}")
             raise UsdaFoodApiError(error_message) from None
 
+    def _extract_food_item_from_payload(self, payload: object) -> dict[str, object]:
+        if not isinstance(payload, dict):
+            error_message = "USDA FoodData Central returned an unexpected response shape."
+            self._logger.error(f"❌ {error_message}")
+            raise UsdaFoodApiError(error_message)
+
+        return self._extract_food_items_from_payload([payload])[0]
+
+    def _extract_food_items_from_payload(self, payload: object) -> list[dict[str, object]]:
         if not isinstance(payload, list):
-            message = "USDA FoodData Central returned an unexpected response shape."
-            self._logger.error(f"❌ {message}")
-            raise UsdaFoodApiError(message)
+            error_message = "USDA FoodData Central returned an unexpected response shape."
+            self._logger.error(f"❌ {error_message}")
+            raise UsdaFoodApiError(error_message)
 
-        return self._extract_food_items_from_payload(payload)
-
-    def _extract_food_items_from_payload(
-        self,
-        payload: list[object],
-    ) -> list[dict[str, object]]:
         foods: list[dict[str, object]] = []
-
         for item in payload:
             if not isinstance(item, dict):
-                message = "USDA FoodData Central returned an invalid food record."
-                self._logger.error(f"❌ {message}")
-                raise UsdaFoodApiError(message)
+                error_message = "USDA FoodData Central returned an invalid food record."
+                self._logger.error(f"❌ {error_message}")
+                raise UsdaFoodApiError(error_message)
 
             food: dict[str, object] = {}
             for key, value in item.items():
                 if not isinstance(key, str):
-                    message = "USDA FoodData Central returned an invalid food-record key."
-                    self._logger.error(f"❌ {message}")
-                    raise UsdaFoodApiError(message)
+                    error_message = "USDA FoodData Central returned an invalid food-record key."
+                    self._logger.error(f"❌ {error_message}")
+                    raise UsdaFoodApiError(error_message)
+
                 food[key] = value
 
             foods.append(food)
