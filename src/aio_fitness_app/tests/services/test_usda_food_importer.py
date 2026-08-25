@@ -26,7 +26,7 @@ class TestUsdaFoodImporter:
         mapper.map_foundation_food.side_effect = [ingredient_data, None]
         importer = UsdaFoodImporter(client, mapper)
 
-        result = importer.prepare_foundation_foods_page(page_number=1)
+        result = importer.import_batch_foods_page(page_number=1)
 
         assert result == [ingredient_data]
         assert client.fetch_foundation_foods_page.call_args_list == [call(1)]

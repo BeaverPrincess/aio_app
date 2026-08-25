@@ -4,24 +4,20 @@ from collections.abc import Mapping
 from decimal import ROUND_HALF_UP, Decimal
 
 from aio_fitness_app.dto.ingredient_dto import IngredientImportData
+from aio_fitness_app.enum import UsdaNutritionCode
 from shared_logging import AppLogger
 
 
 class UsdaFoodMapper:
     """Maps USDA food records to import data."""
 
-    _ENERGY_NUTRIENT_NUMBER = 208
-    _PROTEIN_NUTRIENT_NUMBER = 203
-    _FAT_NUTRIENT_NUMBER = 204
-    _CARBOHYDRATE_NUTRIENT_NUMBER = 205
-
     _NUTRIENT_UNITS = {
-        _ENERGY_NUTRIENT_NUMBER: "KCAL",
-        _PROTEIN_NUTRIENT_NUMBER: "G",
-        _FAT_NUTRIENT_NUMBER: "G",
-        _CARBOHYDRATE_NUTRIENT_NUMBER: "G",
+        UsdaNutritionCode.ENERGY: "KCAL",
+        UsdaNutritionCode.PROTEIN: "G",
+        UsdaNutritionCode.FAT: "G",
+        UsdaNutritionCode.CARB: "G",
     }
-    _REQUIRED_NUTRIENT_NUMBERS = frozenset(_NUTRIENT_UNITS)
+    _REQUIRED_NUTRIENT_CODES = frozenset(_NUTRIENT_UNITS)
     _NUTRITION_QUANTUM = Decimal("0.01")
     _MAX_INGREDIENT_NAME_LENGTH = 255
 
@@ -37,10 +33,10 @@ class UsdaFoodMapper:
             self._logger.debug("Skipping a USDA food record with incomplete ingredient data.")
             return None
 
-        calories = nutrients.get(self._ENERGY_NUTRIENT_NUMBER)
-        protein = nutrients.get(self._PROTEIN_NUTRIENT_NUMBER)
-        fat = nutrients.get(self._FAT_NUTRIENT_NUMBER)
-        carbohydrate = nutrients.get(self._CARBOHYDRATE_NUTRIENT_NUMBER)
+        calories = nutrients.get(UsdaNutritionCode.ENERGY)
+        protein = nutrients.get(UsdaNutritionCode.PROTEIN)
+        fat = nutrients.get(UsdaNutritionCode.FAT)
+        carbohydrate = nutrients.get(UsdaNutritionCode.CARB)
         if calories is None or protein is None or fat is None or carbohydrate is None:
             self._logger.debug("Skipping a USDA food record with missing required nutrients.")
             return None
@@ -70,23 +66,26 @@ class UsdaFoodMapper:
 
         return name
 
-    def _extract_required_nutrients(self, value: object) -> dict[int, Decimal] | None:
+    def _extract_required_nutrients(
+        self,
+        value: object,
+    ) -> dict[UsdaNutritionCode, Decimal] | None:
         if not isinstance(value, list):
             return None
 
-        nutrients: dict[int, Decimal] = {}
+        nutrients: dict[UsdaNutritionCode, Decimal] = {}
         for nutrient in value:
             if not isinstance(nutrient, Mapping):
                 return None
 
-            nutrient_number = self._get_nutrient_number(nutrient.get("number"))
-            if nutrient_number not in self._REQUIRED_NUTRIENT_NUMBERS:
+            nutrient_code = self._get_nutrition_code(nutrient.get("number"))
+            if nutrient_code is None or nutrient_code not in self._REQUIRED_NUTRIENT_CODES:
                 continue
 
-            if nutrient_number in nutrients:
+            if nutrient_code in nutrients:
                 return None
 
-            expected_unit = self._NUTRIENT_UNITS[nutrient_number]
+            expected_unit = self._NUTRIENT_UNITS[nutrient_code]
             unit_name = nutrient.get("unitName")
             amount = self._get_non_negative_decimal(nutrient.get("amount"))
             if (
@@ -96,21 +95,25 @@ class UsdaFoodMapper:
             ):
                 return None
 
-            nutrients[nutrient_number] = amount
+            nutrients[nutrient_code] = amount
 
         return nutrients
 
-    def _get_nutrient_number(self, value: object) -> int | None:
+    def _get_nutrition_code(self, value: object) -> UsdaNutritionCode | None:
         if isinstance(value, bool):
             return None
 
         if isinstance(value, int):
-            return value
+            nutrient_number = value
+        elif isinstance(value, str) and value.isdecimal():
+            nutrient_number = int(value)
+        else:
+            return None
 
-        if isinstance(value, str) and value.isdecimal():
-            return int(value)
-
-        return None
+        try:
+            return UsdaNutritionCode(nutrient_number)
+        except ValueError:
+            return None
 
     def _get_non_negative_decimal(self, value: object) -> Decimal | None:
         if isinstance(value, bool) or not isinstance(value, int | float | Decimal):

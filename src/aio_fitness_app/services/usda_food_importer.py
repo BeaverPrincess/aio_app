@@ -19,7 +19,7 @@ class UsdaFoodImporter:
         self._mapper = mapper
         self._logger = AppLogger(verbose)
 
-    def prepare_foundation_foods_page(self, page_number: int) -> list[IngredientImportData]:
+    def import_batch_foods_page(self, page_number: int) -> list[IngredientImportData]:
         """Fetch and map one USDA Foundation Foods page."""
         foods = self._client.fetch_foundation_foods_page(page_number)
         ingredient_data_list: list[IngredientImportData] = []
