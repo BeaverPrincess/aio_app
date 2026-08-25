@@ -24,9 +24,9 @@ class UsdaFoodClient:
     _PAGE_SIZE = 200
     _REQUEST_TIMEOUT_SECONDS = 30
 
-    def __init__(self, settings: UsdaFoodApiSettings) -> None:
+    def __init__(self, settings: UsdaFoodApiSettings, verbose: bool = False) -> None:
         self._api_key = settings.api_str
-        self._logger = AppLogger()
+        self._logger = AppLogger(verbose)
 
     def fetch_foundation_foods_page(self, page_number: int) -> list[dict[str, object]]:
         if page_number < 1:

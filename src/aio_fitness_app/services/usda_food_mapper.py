@@ -25,8 +25,8 @@ class UsdaFoodMapper:
     _NUTRITION_QUANTUM = Decimal("0.01")
     _MAX_INGREDIENT_NAME_LENGTH = 255
 
-    def __init__(self) -> None:
-        self._logger = AppLogger()
+    def __init__(self, verbose: bool = False) -> None:
+        self._logger = AppLogger(verbose)
 
     def map_foundation_food(self, food: Mapping[str, object]) -> IngredientImportData | None:
         """Map one USDA food record."""
