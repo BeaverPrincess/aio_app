@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from decimal import ROUND_HALF_UP, Decimal
 
 from aio_fitness_app.dto.ingredient_dto import IngredientImportData
+from shared_logging import AppLogger
 
 
 class UsdaFoodMapper:
@@ -24,12 +25,16 @@ class UsdaFoodMapper:
     _NUTRITION_QUANTUM = Decimal("0.01")
     _MAX_INGREDIENT_NAME_LENGTH = 255
 
+    def __init__(self) -> None:
+        self._logger = AppLogger()
+
     def map_foundation_food(self, food: Mapping[str, object]) -> IngredientImportData | None:
         """Map one USDA food record."""
         fdc_id = self._get_positive_integer(food.get("fdcId"))
         name = self._get_ingredient_name(food.get("description"))
         nutrients = self._extract_required_nutrients(food.get("foodNutrients"))
         if fdc_id is None or name is None or nutrients is None:
+            self._logger.debug("Skipping a USDA food record with incomplete ingredient data.")
             return None
 
         calories = nutrients.get(self._ENERGY_NUTRIENT_NUMBER)
@@ -37,6 +42,7 @@ class UsdaFoodMapper:
         fat = nutrients.get(self._FAT_NUTRIENT_NUMBER)
         carbohydrate = nutrients.get(self._CARBOHYDRATE_NUTRIENT_NUMBER)
         if calories is None or protein is None or fat is None or carbohydrate is None:
+            self._logger.debug("Skipping a USDA food record with missing required nutrients.")
             return None
 
         return IngredientImportData(

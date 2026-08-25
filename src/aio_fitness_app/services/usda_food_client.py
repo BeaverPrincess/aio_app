@@ -13,6 +13,7 @@ from requests.exceptions import (
 
 from aio_fitness_app.error import UsdaFoodApiError, UsdaFoodApiRateLimitError
 from aio_fitness_app.settings import UsdaFoodApiSettings
+from shared_logging import AppLogger
 
 
 class UsdaFoodClient:
@@ -25,6 +26,7 @@ class UsdaFoodClient:
 
     def __init__(self, settings: UsdaFoodApiSettings) -> None:
         self._api_key = settings.api_str
+        self._logger = AppLogger()
 
     def fetch_foundation_foods_page(self, page_number: int) -> list[dict[str, object]]:
         if page_number < 1:
@@ -53,25 +55,31 @@ class UsdaFoodClient:
                 and error.response.status_code == HTTPStatus.TOO_MANY_REQUESTS
             ):
                 error_message = "USDA rate limit exceeded."
+                self._logger.warning(f"⚠️ {error_message}")
                 raise UsdaFoodApiRateLimitError(error_message) from None
 
             error_message = "USDA returned unsuccessful response."
+            self._logger.error(f"❌ {error_message}")
             raise UsdaFoodApiError(error_message) from None
         except ConnectionError, Timeout:
             error_message = "Couldnt connect to USDA."
+            self._logger.error(f"❌ {error_message}")
             raise UsdaFoodApiError(error_message) from None
         except RequestException:
             message = "USDA request failed."
+            self._logger.error(f"❌ {message}")
             raise UsdaFoodApiError(message) from None
 
         try:
             payload: object = response.json()
         except JSONDecodeError:
             error_message = "USDA FoodData Central returned invalid JSON."
+            self._logger.error(f"❌ {error_message}")
             raise UsdaFoodApiError(error_message) from None
 
         if not isinstance(payload, list):
             message = "USDA FoodData Central returned an unexpected response shape."
+            self._logger.error(f"❌ {message}")
             raise UsdaFoodApiError(message)
 
         return self._extract_food_items_from_payload(payload)
@@ -85,12 +93,14 @@ class UsdaFoodClient:
         for item in payload:
             if not isinstance(item, dict):
                 message = "USDA FoodData Central returned an invalid food record."
+                self._logger.error(f"❌ {message}")
                 raise UsdaFoodApiError(message)
 
             food: dict[str, object] = {}
             for key, value in item.items():
                 if not isinstance(key, str):
                     message = "USDA FoodData Central returned an invalid food-record key."
+                    self._logger.error(f"❌ {message}")
                     raise UsdaFoodApiError(message)
                 food[key] = value
 
