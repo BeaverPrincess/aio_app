@@ -12,6 +12,7 @@ from requests.exceptions import (
     Timeout,
 )
 
+from aio_fitness_app.constants import USDA_FOOD_PAGE_SIDE
 from aio_fitness_app.enum import UsdaNutritionCode
 from aio_fitness_app.error import UsdaFoodApiError, UsdaFoodApiRateLimitError
 from aio_fitness_app.settings import UsdaFoodApiSettings
@@ -25,7 +26,6 @@ class UsdaFoodClient:
     _FOOD_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/food"
     _FOODS_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/foods"
     _FOUNDATION_DATA_TYPE = "Foundation"
-    _PAGE_SIZE = 200
     _REQUEST_TIMEOUT_SECONDS = 30
     _DETAIL_FORMAT = "abridged"
     _REQUIRED_NUTRIENTS = (
@@ -49,7 +49,7 @@ class UsdaFoodClient:
             "api_key": self._api_key,
             "dataType": self._FOUNDATION_DATA_TYPE,
             "pageNumber": page_number,
-            "pageSize": self._PAGE_SIZE,
+            "pageSize": USDA_FOOD_PAGE_SIDE,
             "sortBy": "fdcId",
             "sortOrder": "asc",
         }

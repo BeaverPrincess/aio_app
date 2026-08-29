@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from sqlalchemy import select
+
+from aio_fitness_app.constants import GLOBAL_CONSTANT_ROW_ID
+from aio_fitness_app.database import db
 from aio_fitness_app.dto.ingredient_dto import IngredientImportData
+from aio_fitness_app.models.global_constant import GlobalConstant
 from aio_fitness_app.services.usda_food_client import UsdaFoodClient
 from aio_fitness_app.services.usda_food_mapper import UsdaFoodMapper
 from shared_logging import AppLogger
@@ -33,3 +38,14 @@ class UsdaFoodImporter:
             f"{len(foods)} food records on page {page_number}."
         )
         return ingredient_data_list
+
+    def continue_batch_food_import(self) -> list[IngredientImportData]:
+        last_usda_food_page_query = select(GlobalConstant.current_usda_food_page).where(
+            GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID
+        )
+        last_usda_food_page = db.session.execute(last_usda_food_page_query).scalar_one_or_none()
+        if last_usda_food_page is None:
+            self._logger.error("❌ No last food page.")
+            return []
+
+        return self.import_batch_foods_page(last_usda_food_page)
