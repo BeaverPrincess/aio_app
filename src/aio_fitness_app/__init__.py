@@ -2,9 +2,9 @@ from collections.abc import Mapping
 
 from flask import Flask
 
-from .database import db
-from .settings import DatabaseSettings
-from .web.usda_food_routes import test_blueprint
+from aio_fitness_app.database import db
+from aio_fitness_app.settings import DatabaseSettings
+from aio_fitness_app.web.test_routes import test_blueprint
 
 
 def create_app(config_overrides: Mapping[str, object] | None = None) -> Flask:

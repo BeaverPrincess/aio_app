@@ -17,11 +17,10 @@ class UsdaFoodImporter:
     def __init__(
         self,
         client: UsdaFoodClient,
-        mapper: UsdaFoodMapper,
         verbose: bool = False,
     ) -> None:
         self._client = client
-        self._mapper = mapper
+        self._mapper = UsdaFoodMapper(verbose=verbose)
         self._logger = AppLogger(verbose)
 
     def import_batch_foods_page(self, page_number: int) -> list[IngredientImportData]:

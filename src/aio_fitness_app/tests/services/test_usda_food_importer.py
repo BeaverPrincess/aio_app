@@ -4,12 +4,11 @@ from unittest.mock import Mock, call, patch
 from aio_fitness_app.dto.ingredient_dto import IngredientImportData
 from aio_fitness_app.services.usda_food_client import UsdaFoodClient
 from aio_fitness_app.services.usda_food_importer import UsdaFoodImporter
-from aio_fitness_app.services.usda_food_mapper import UsdaFoodMapper
 from aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class TestUsdaFoodImporter:
-    def test_prepare_foundation_foods_page__returns_valid_ingredients(self) -> None:
+    def test_import_batch_foods_page__returns_valid_ingredients(self) -> None:
         """It maps a fetched page and excludes incomplete food records."""
         valid_food: dict[str, object] = {"fdcId": 1}
         incomplete_food: dict[str, object] = {"fdcId": 2}
@@ -23,13 +22,19 @@ class TestUsdaFoodImporter:
         )
         client = Mock(spec=UsdaFoodClient)
         client.fetch_foods_by_page.return_value = [valid_food, incomplete_food]
-        mapper = Mock(spec=UsdaFoodMapper)
-        mapper.map_foundation_food.side_effect = [ingredient_data, None]
-        importer = UsdaFoodImporter(client, mapper)
 
-        result = importer.import_batch_foods_page(page_number=1)
+        with patch(
+            "aio_fitness_app.services.usda_food_importer.UsdaFoodMapper",
+            autospec=True,
+        ) as mapper_type:
+            mapper = mapper_type.return_value
+            mapper.map_foundation_food.side_effect = [ingredient_data, None]
+            importer = UsdaFoodImporter(client)
+
+            result = importer.import_batch_foods_page(page_number=1)
 
         assert result == [ingredient_data]
+        assert mapper_type.call_args == call(verbose=False)
         assert client.fetch_foods_by_page.call_args_list == [call(1)]
         assert mapper.map_foundation_food.call_args_list == [
             call(valid_food),
