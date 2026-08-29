@@ -4,6 +4,7 @@ from flask import Flask
 
 from .database import db
 from .settings import DatabaseSettings
+from .web.usda_food_routes import usda_food_blueprint
 
 
 def create_app(config_overrides: Mapping[str, object] | None = None) -> Flask:
@@ -17,6 +18,7 @@ def create_app(config_overrides: Mapping[str, object] | None = None) -> Flask:
         app.config.update(config_overrides)
 
     db.init_app(app)
+    app.register_blueprint(usda_food_blueprint)
 
     @app.get("/health")
     def health() -> dict[str, str]:
