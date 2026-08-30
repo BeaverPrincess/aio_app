@@ -15,3 +15,16 @@ class IngredientImportDataKey(StrEnum):
     PROTEIN_PER_100G = "protein_g_per_100g"
     CARB_PER_100G = "carb_g_per_100g"
     FAT_PER_100G = "fat_g_per_100g"
+
+
+class UsdaFoodType(StrEnum):
+    FOUNDATION = "foundation"
+    FNDDS = "fndds"
+
+    @property
+    def usda_api_data_type(self) -> str:
+        data_type_by_food_type = {
+            UsdaFoodType.FOUNDATION: "Foundation",
+            UsdaFoodType.FNDDS: "Survey (FNDDS)",
+        }
+        return data_type_by_food_type[self]

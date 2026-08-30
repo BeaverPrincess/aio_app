@@ -4,9 +4,11 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from aio_fitness_app.constants import GLOBAL_CONSTANT_ROW_ID
 from aio_fitness_app.database import db
+from aio_fitness_app.enum import UsdaFoodType
 from aio_fitness_app.error import UsdaFoodApiError
 from aio_fitness_app.models.global_constant import GlobalConstant
 from aio_fitness_app.models.ingredient import Ingredient
@@ -25,10 +27,13 @@ class UsdaFoodImporter:
         self,
         client: UsdaFoodClient,
         verbose: bool = False,
+        food_type: UsdaFoodType = UsdaFoodType.FOUNDATION,
     ) -> None:
         self._client = client
         self._mapper = UsdaFoodMapper(verbose=verbose)
         self._logger = AppLogger(verbose)
+        self._food_type = food_type
+        self._current_food_page_field = self._get_current_food_page_field()
 
     def import_batch_foods_page(self, page_number: int) -> bool:
         """Fetch and map one USDA Foundation Foods page."""
@@ -53,12 +58,7 @@ class UsdaFoodImporter:
     def continue_batch_food_import(self) -> None:
         try:
             while True:
-                next_usda_food_page_query = select(GlobalConstant.current_usda_food_page).where(
-                    GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID
-                )
-                next_usda_food_page = db.session.execute(
-                    next_usda_food_page_query
-                ).scalar_one_or_none()
+                next_usda_food_page = self._get_next_food_page()
                 if next_usda_food_page is None:
                     self._logger.error("❌ No last food page.")
                     return
@@ -71,6 +71,12 @@ class UsdaFoodImporter:
             db.session.rollback()
             raise
 
+    def _get_next_food_page(self) -> int | None:
+        current_food_page_query = select(self._current_food_page_field).where(
+            GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID
+        )
+        return db.session.execute(current_food_page_query).scalar_one_or_none()
+
     def _save_ingredient_data_to_db(
         self, ingredient_data_list: list[dict[str, str | int | Decimal]], next_page_number: int
     ) -> None:
@@ -81,7 +87,11 @@ class UsdaFoodImporter:
             update_current_page_statement = (
                 update(GlobalConstant)
                 .where(GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID)
-                .values(current_usda_food_page=next_page_number)
+                .values(
+                    {
+                        self._current_food_page_field: next_page_number,
+                    }
+                )
             )
             db.session.execute(update_current_page_statement)
             db.session.commit()
@@ -89,3 +99,14 @@ class UsdaFoodImporter:
             db.session.rollback()
             self._logger.error("❌ Could not save USDA ingredients and update the page checkpoint.")
             raise
+
+    def _get_current_food_page_field(self) -> InstrumentedAttribute[int]:
+        fields = {
+            UsdaFoodType.FOUNDATION: GlobalConstant.current_foundation_food_page,
+            UsdaFoodType.FNDDS: GlobalConstant.current_fndds_food_page,
+        }
+
+        try:
+            return fields[self._food_type]
+        except KeyError:
+            raise ValueError(f"❌ Unsupported USDA food type: {self._food_type}") from None

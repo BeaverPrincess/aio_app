@@ -13,7 +13,7 @@ from requests.exceptions import (
 )
 
 from aio_fitness_app.constants import USDA_FOOD_PAGE_SIDE
-from aio_fitness_app.enum import UsdaNutritionCode
+from aio_fitness_app.enum import UsdaFoodType, UsdaNutritionCode
 from aio_fitness_app.error import UsdaFoodApiError, UsdaFoodApiRateLimitError
 from aio_fitness_app.settings import UsdaFoodApiSettings
 from shared_logging import AppLogger
@@ -25,7 +25,6 @@ class UsdaFoodClient:
     _FOODS_LIST_URL = "https://api.nal.usda.gov/fdc/v1/foods/list"
     _FOOD_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/food"
     _FOODS_DETAILS_URL = "https://api.nal.usda.gov/fdc/v1/foods"
-    _FOUNDATION_DATA_TYPE = "Foundation"
     _REQUEST_TIMEOUT_SECONDS = 30
     _DETAIL_FORMAT = "abridged"
     _REQUIRED_NUTRIENTS = (
@@ -35,19 +34,25 @@ class UsdaFoodClient:
         f"{UsdaNutritionCode.CARB.value}"
     )
 
-    def __init__(self, settings: UsdaFoodApiSettings, verbose: bool = False) -> None:
+    def __init__(
+        self,
+        settings: UsdaFoodApiSettings,
+        verbose: bool = False,
+        food_type: UsdaFoodType = UsdaFoodType.FOUNDATION,
+    ) -> None:
         self._api_key = settings.api_str
         self._logger = AppLogger(verbose)
         self._headers = {"Accept": "application/json"}
+        self._food_type = food_type
 
     def fetch_foods_by_page(self, page_number: int) -> list[dict[str, object]]:
-        """Fetch one sorted page of USDA Foundation Foods."""
+        """Fetch one sorted page of selected USDA food dataset."""
         if page_number < 1:
             raise ValueError("page_number must be at least 1.")
 
         query_params = {
             "api_key": self._api_key,
-            "dataType": self._FOUNDATION_DATA_TYPE,
+            "dataType": self._food_type.usda_api_data_type,
             "pageNumber": page_number,
             "pageSize": USDA_FOOD_PAGE_SIDE,
             "sortBy": "fdcId",
