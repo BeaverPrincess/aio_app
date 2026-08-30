@@ -64,6 +64,22 @@ services:
       - --port
       - "5000"
 
+  alembic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./migrations:/app/migrations
+      - ./alembic.ini:/app/alembic.ini:ro
+    entrypoint: ["alembic"]
+
 volumes:
   postgres_data:
   pgadmin_data:
