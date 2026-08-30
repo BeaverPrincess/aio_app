@@ -12,6 +12,7 @@ from psycopg import connect, sql
 from sqlalchemy import URL, create_engine, make_url
 
 from aio_fitness_app import create_app
+from aio_fitness_app.database import db
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 TEST_DATABASE_ADMIN_URL_NAME = "TEST_DATABASE_ADMIN_URL"
@@ -62,6 +63,47 @@ def migrated_test_database(test_database_url: URL) -> Iterator[URL]:
         yield test_database_url
     finally:
         engine.dispose()
+
+
+@pytest.fixture
+def database_app(migrated_test_database: URL) -> Iterator[Flask]:
+    """Create a Flask application connected to the migrated test database."""
+    app = create_app(
+        {
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": migrated_test_database,
+        }
+    )
+
+    with app.app_context():
+        yield app
+
+
+@pytest.fixture
+def database_transaction(database_app: Flask) -> Iterator[None]:
+    """Roll back all database changes made by one integration test."""
+    connection = db.engine.connect()
+    outer_transaction = connection.begin()
+
+    db.session.remove()
+    db.session.configure(
+        bind=connection,
+        join_transaction_mode="create_savepoint",
+    )
+
+    try:
+        yield
+    finally:
+        db.session.remove()
+
+        try:
+            outer_transaction.rollback()
+        finally:
+            connection.close()
+            db.session.configure(
+                bind=None,
+                join_transaction_mode="conditional_savepoint",
+            )
 
 
 @pytest.fixture
