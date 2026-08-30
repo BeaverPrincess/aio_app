@@ -1,9 +1,7 @@
 from decimal import Decimal
 
-from aio_fitness_app.services.usda_food_mapper import (
-    IngredientImportData,
-    UsdaFoodMapper,
-)
+from aio_fitness_app.enum import IngredientImportDataKey
+from aio_fitness_app.services.usda_food_mapper import UsdaFoodMapper
 
 
 class TestUsdaFoodMapper:
@@ -24,16 +22,18 @@ class TestUsdaFoodMapper:
 
         result = mapper.map_foundation_food(food)
 
-        assert result == IngredientImportData(
-            fdc_id=171413,
-            name="Apple, raw, with skin",
-            calories_kcal_per_100g=Decimal("52.13"),
-            protein_g_per_100g=Decimal("0.26"),
-            carb_g_per_100g=Decimal("13.81"),
-            fat_g_per_100g=Decimal("0.17"),
-        )
+        assert result == {
+            IngredientImportDataKey.FDC_ID: 171413,
+            IngredientImportDataKey.FOOD_NAME: "Apple, raw, with skin",
+            IngredientImportDataKey.CALORIES_PER_100G: Decimal("52.13"),
+            IngredientImportDataKey.PROTEIN_PER_100G: Decimal("0.26"),
+            IngredientImportDataKey.CARB_PER_100G: Decimal("13.81"),
+            IngredientImportDataKey.FAT_PER_100G: Decimal("0.17"),
+        }
 
-    def test_map_foundation_food__returns_none_when_a_required_nutrient_is_missing(self) -> None:
+    def test_map_foundation_food__returns_empty_mapping_when_a_required_nutrient_is_missing(
+        self,
+    ) -> None:
         """It rejects foods that cannot populate every nutrition column."""
         food: dict[str, object] = {
             "fdcId": 171413,
@@ -48,4 +48,4 @@ class TestUsdaFoodMapper:
 
         result = mapper.map_foundation_food(food)
 
-        assert result is None
+        assert result == {}

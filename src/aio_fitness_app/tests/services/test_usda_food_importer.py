@@ -1,25 +1,25 @@
 from decimal import Decimal
 from unittest.mock import Mock, call, patch
 
-from aio_fitness_app.dto.ingredient_dto import IngredientImportData
+from aio_fitness_app.enum import IngredientImportDataKey
 from aio_fitness_app.services.usda_food_client import UsdaFoodClient
 from aio_fitness_app.services.usda_food_importer import UsdaFoodImporter
 from aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class TestUsdaFoodImporter:
-    def test_import_batch_foods_page__returns_valid_ingredients(self) -> None:
+    def test_import_batch_foods_page__saves_valid_ingredients_and_returns_true(self) -> None:
         """It maps a fetched page and excludes incomplete food records."""
         valid_food: dict[str, object] = {"fdcId": 1}
         incomplete_food: dict[str, object] = {"fdcId": 2}
-        ingredient_data = IngredientImportData(
-            fdc_id=1,
-            name="Apple",
-            calories_kcal_per_100g=Decimal("52.00"),
-            protein_g_per_100g=Decimal("0.26"),
-            carb_g_per_100g=Decimal("13.81"),
-            fat_g_per_100g=Decimal("0.17"),
-        )
+        ingredient_data = {
+            IngredientImportDataKey.FDC_ID: 1,
+            IngredientImportDataKey.FOOD_NAME: "Apple",
+            IngredientImportDataKey.CALORIES_PER_100G: Decimal("52.00"),
+            IngredientImportDataKey.PROTEIN_PER_100G: Decimal("0.26"),
+            IngredientImportDataKey.CARB_PER_100G: Decimal("13.81"),
+            IngredientImportDataKey.FAT_PER_100G: Decimal("0.17"),
+        }
         client = Mock(spec=UsdaFoodClient)
         client.fetch_foods_by_page.return_value = [valid_food, incomplete_food]
 
@@ -28,17 +28,21 @@ class TestUsdaFoodImporter:
             autospec=True,
         ) as mapper_type:
             mapper = mapper_type.return_value
-            mapper.map_foundation_food.side_effect = [ingredient_data, None]
+            mapper.map_foundation_food.side_effect = [ingredient_data, {}]
             importer = UsdaFoodImporter(client)
 
-            result = importer.import_batch_foods_page(page_number=1)
+            with patch.object(importer, "_save_ingredient_data_to_db", autospec=True) as mock_save:
+                result = importer.import_batch_foods_page(page_number=1)
 
-        assert result == [ingredient_data]
+        assert result is True
         assert mapper_type.call_args == call(verbose=False)
         assert client.fetch_foods_by_page.call_args_list == [call(1)]
         assert mapper.map_foundation_food.call_args_list == [
             call(valid_food),
             call(incomplete_food),
+        ]
+        assert mock_save.call_args_list == [
+            call([ingredient_data], next_page_number=2),
         ]
 
     def test_fetch_food_by_fdc_id__returns_one_food(self) -> None:
