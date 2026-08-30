@@ -3,8 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from decimal import ROUND_HALF_UP, Decimal
 
-from aio_fitness_app.dto.ingredient_dto import IngredientImportData
-from aio_fitness_app.enum import UsdaNutritionCode
+from aio_fitness_app.enum import IngredientImportDataKey, UsdaNutritionCode
 from shared_logging import AppLogger
 
 
@@ -24,14 +23,14 @@ class UsdaFoodMapper:
     def __init__(self, verbose: bool = False) -> None:
         self._logger = AppLogger(verbose)
 
-    def map_foundation_food(self, food: Mapping[str, object]) -> IngredientImportData | None:
+    def map_foundation_food(self, food: Mapping[str, object]) -> dict[str, str | int | Decimal]:
         """Map one USDA food record."""
         fdc_id = self._get_positive_integer(food.get("fdcId"))
         name = self._get_ingredient_name(food.get("description"))
         nutrients = self._extract_required_nutrients(food.get("foodNutrients"))
         if fdc_id is None or name is None or nutrients is None:
             self._logger.debug("Skipping a USDA food record with incomplete ingredient data.")
-            return None
+            return {}
 
         calories = nutrients.get(UsdaNutritionCode.ENERGY)
         protein = nutrients.get(UsdaNutritionCode.PROTEIN)
@@ -39,16 +38,16 @@ class UsdaFoodMapper:
         carbohydrate = nutrients.get(UsdaNutritionCode.CARB)
         if calories is None or protein is None or fat is None or carbohydrate is None:
             self._logger.debug("Skipping a USDA food record with missing required nutrients.")
-            return None
+            return {}
 
-        return IngredientImportData(
-            fdc_id=fdc_id,
-            name=name,
-            calories_kcal_per_100g=calories,
-            protein_g_per_100g=protein,
-            carb_g_per_100g=carbohydrate,
-            fat_g_per_100g=fat,
-        )
+        return {
+            IngredientImportDataKey.FDC_ID: fdc_id,
+            IngredientImportDataKey.FOOD_NAME: name,
+            IngredientImportDataKey.CALORIES_PER_100G: calories,
+            IngredientImportDataKey.PROTEIN_PER_100G: protein,
+            IngredientImportDataKey.CARB_PER_100G: carbohydrate,
+            IngredientImportDataKey.FAT_PER_100G: fat,
+        }
 
     def _get_positive_integer(self, value: object) -> int | None:
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:

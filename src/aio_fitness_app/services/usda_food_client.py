@@ -117,7 +117,7 @@ class UsdaFoodClient:
                 and error.response.status_code == HTTPStatus.TOO_MANY_REQUESTS
             ):
                 error_message = "USDA rate limit exceeded."
-                self._logger.warning(f"⚠️ {error_message}")
+                self._logger.error(f"❌ {error_message}")
                 raise UsdaFoodApiRateLimitError(error_message) from None
 
             error_message = "USDA returned unsuccessful response."
