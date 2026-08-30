@@ -9,10 +9,12 @@ from alembic.config import Config
 from flask import Flask
 from flask.testing import FlaskClient
 from psycopg import connect, sql
-from sqlalchemy import URL, create_engine, make_url
+from sqlalchemy import URL, create_engine, delete, make_url
 
 from aio_fitness_app import create_app
+from aio_fitness_app.constants import GLOBAL_CONSTANT_ROW_ID
 from aio_fitness_app.database import db
+from aio_fitness_app.models.global_constant import GlobalConstant
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 TEST_DATABASE_ADMIN_URL_NAME = "TEST_DATABASE_ADMIN_URL"
@@ -104,6 +106,36 @@ def database_transaction(database_app: Flask) -> Iterator[None]:
                 bind=None,
                 join_transaction_mode="conditional_savepoint",
             )
+
+
+@pytest.fixture(scope="class")
+def usda_importer_baseline(migrated_test_database: URL) -> Iterator[tuple[int, int]]:
+    """Seed the committed importer state shared by one test class."""
+    foundation_page = 1
+    fndds_page = 1
+    global_constant = GlobalConstant()
+    global_constant.id = GLOBAL_CONSTANT_ROW_ID
+    global_constant.current_foundation_food_page = foundation_page
+    global_constant.current_fndds_food_page = fndds_page
+    app = create_app(
+        {
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": migrated_test_database,
+        }
+    )
+
+    with app.app_context():
+        db.session.add(global_constant)
+        db.session.commit()
+
+    try:
+        yield foundation_page, fndds_page
+    finally:
+        with app.app_context():
+            db.session.execute(
+                delete(GlobalConstant).where(GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID)
+            )
+            db.session.commit()
 
 
 @pytest.fixture

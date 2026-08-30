@@ -1,7 +1,12 @@
 from decimal import Decimal
 from unittest.mock import Mock, call, patch
 
+from sqlalchemy import select
+
+from aio_fitness_app.constants import GLOBAL_CONSTANT_ROW_ID
+from aio_fitness_app.database import db
 from aio_fitness_app.enum import IngredientImportDataKey
+from aio_fitness_app.models.global_constant import GlobalConstant
 from aio_fitness_app.services.usda_food_client import UsdaFoodClient
 from aio_fitness_app.services.usda_food_importer import UsdaFoodImporter
 from aio_fitness_app.settings import UsdaFoodApiSettings
@@ -100,3 +105,19 @@ class TestUsdaFoodImporter:
             headers={"Accept": "application/json"},
             timeout=30,
         )
+
+
+class TestUsdaFoodImporterDatabase:
+    def test_global_constant_baseline__is_available_to_every_test(
+        self,
+        database_transaction: None,
+        usda_importer_baseline: tuple[int, int],
+    ) -> None:
+        """It exposes the committed importer checkpoint baseline."""
+        expected_foundation_page, expected_fndds_page = usda_importer_baseline
+
+        statement = select(GlobalConstant).where(GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID)
+        global_constant = db.session.scalars(statement).one()
+
+        assert global_constant.current_foundation_food_page == expected_foundation_page
+        assert global_constant.current_fndds_food_page == expected_fndds_page
