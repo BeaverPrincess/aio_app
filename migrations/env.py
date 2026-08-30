@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import Connection
 
 from aio_fitness_app import models  # noqa: F401
 from aio_fitness_app.database import Base
@@ -10,8 +11,6 @@ from aio_fitness_app.settings import DatabaseSettings
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-database_url = DatabaseSettings.from_env().url
-config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -54,24 +53,30 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def run_migrations_with_connection(connection: Connection) -> None:
+    """Apply migrations through an already-open database connection."""
+    context.configure(connection=connection, target_metadata=target_metadata)
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode."""
+    supplied_connection = config.attributes.get("connection")
+    if isinstance(supplied_connection, Connection):
+        run_migrations_with_connection(supplied_connection)
+        return
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    database_url = DatabaseSettings.from_env().url
+    config.set_main_option("sqlalchemy.url", database_url)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
-
-        with context.begin_transaction():
-            context.run_migrations()
+        run_migrations_with_connection(connection)
 
 
 if context.is_offline_mode():
