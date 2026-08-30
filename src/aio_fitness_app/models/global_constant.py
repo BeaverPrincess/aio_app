@@ -14,4 +14,5 @@ class GlobalConstant(db.Model):
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=False, default=GLOBAL_CONSTANT_ROW_ID
     )
-    current_usda_food_page: Mapped[int] = mapped_column(Integer)
+    current_foundation_food_page: Mapped[int] = mapped_column(Integer)
+    current_fndds_food_page: Mapped[int] = mapped_column(Integer)
