@@ -5,7 +5,7 @@ from aio_fitness_app.services.usda_food_importer import UsdaFoodImporter
 from aio_fitness_app.settings import UsdaFoodApiSettings
 
 test_blueprint = Blueprint(
-    "usda_food",
+    "test",
     __name__,
 )
 
