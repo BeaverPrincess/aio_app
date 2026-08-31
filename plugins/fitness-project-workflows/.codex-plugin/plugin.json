@@ -1,0 +1,18 @@
+{
+  "name": "fitness-project-workflows",
+  "version": "0.1.0+codex.20260830172709",
+  "description": "Shared workflows for the fitness project repository",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Fitness Project Workflows",
+    "shortDescription": "Shared Python, schema, and guidance workflows.",
+    "longDescription": "Reusable Codex workflows for testing, SQLAlchemy schema changes, project guidance, and teaching-oriented implementation in this repository.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use the project pytest workflow to add a service test."
+  }
+}

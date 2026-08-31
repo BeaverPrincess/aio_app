@@ -1,0 +1,20 @@
+{
+  "name": "fitness-project-workflows-local",
+  "interface": {
+    "displayName": "Fitness Project Workflows"
+  },
+  "plugins": [
+    {
+      "name": "fitness-project-workflows",
+      "source": {
+        "source": "local",
+        "path": "./plugins/fitness-project-workflows"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
