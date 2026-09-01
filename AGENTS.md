@@ -11,6 +11,10 @@ This repository is a learning-focused fitness project that may contain multiple 
 - When a requested approach is materially suboptimal, explain the concern and a better design before implementing it.
 - Before handoff, review the result for correctness, maintainability, scope, and a clearly better alternative.
 
+## Agent response file links
+
+- When linking a local file in a response, use a Markdown link with a forward-slash absolute path. On Windows, use `/C:/...`, never `C:\...`; wrap a target containing spaces in `<...>`.
+
 ## Sensitive configuration
 
 - Never access, inspect, display, infer, or request values from `.env`.

@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
+from dotenv import load_dotenv
 from flask import Flask
 from flask.testing import FlaskClient
 from psycopg import connect, sql
@@ -21,6 +22,7 @@ TEST_DATABASE_ADMIN_URL_NAME = "TEST_DATABASE_ADMIN_URL"
 
 
 def _get_test_database_admin_url() -> URL:
+    load_dotenv(PROJECT_ROOT / ".env")
     try:
         return make_url(os.environ[TEST_DATABASE_ADMIN_URL_NAME])
     except KeyError:

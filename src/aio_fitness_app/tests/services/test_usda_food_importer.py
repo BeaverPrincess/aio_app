@@ -7,14 +7,20 @@ from aio_fitness_app.constants import GLOBAL_CONSTANT_ROW_ID
 from aio_fitness_app.database import db
 from aio_fitness_app.enum import IngredientImportDataKey
 from aio_fitness_app.models.global_constant import GlobalConstant
+from aio_fitness_app.models.ingredient import Ingredient
 from aio_fitness_app.services.usda_food_client import UsdaFoodClient
 from aio_fitness_app.services.usda_food_importer import UsdaFoodImporter
 from aio_fitness_app.settings import UsdaFoodApiSettings
 
 
 class TestUsdaFoodImporter:
-    def test_import_batch_foods_page__saves_valid_ingredients_and_returns_true(self) -> None:
-        """It maps a fetched page and excludes incomplete food records."""
+    def test_import_batch_foods_page__persists_mapped_ingredient_and_advances_checkpoint(
+        self,
+        database_transaction: None,
+        usda_importer_baseline: tuple[int, int],
+    ) -> None:
+        """It saves valid mapped data and advances only the Foundation checkpoint."""
+        expected_foundation_page, expected_fndds_page = usda_importer_baseline
         valid_food: dict[str, object] = {"fdcId": 1}
         incomplete_food: dict[str, object] = {"fdcId": 2}
         ingredient_data = {
@@ -36,19 +42,36 @@ class TestUsdaFoodImporter:
             mapper.map_foundation_food.side_effect = [ingredient_data, {}]
             importer = UsdaFoodImporter(client)
 
-            with patch.object(importer, "_save_ingredient_data_to_db", autospec=True) as mock_save:
-                result = importer.import_batch_foods_page(page_number=1)
+            result = importer.import_batch_foods_page(page_number=expected_foundation_page)
+
+        ingredient_statement = select(Ingredient).where(Ingredient.name == "Apple")
+        saved_ingredient = db.session.scalars(ingredient_statement).one()
+
+        missing_ingredient_statement = select(Ingredient).where(
+            Ingredient.name == "Not an imported ingredient"
+        )
+        missing_ingredient = db.session.scalars(missing_ingredient_statement).one_or_none()
+
+        global_constant_statement = select(GlobalConstant).where(
+            GlobalConstant.id == GLOBAL_CONSTANT_ROW_ID
+        )
+        global_constant = db.session.scalars(global_constant_statement).one()
 
         assert result is True
         assert mapper_type.call_args == call(verbose=False)
-        assert client.fetch_foods_by_page.call_args_list == [call(1)]
+        assert client.fetch_foods_by_page.call_args_list == [call(expected_foundation_page)]
         assert mapper.map_foundation_food.call_args_list == [
             call(valid_food),
             call(incomplete_food),
         ]
-        assert mock_save.call_args_list == [
-            call([ingredient_data], next_page_number=2),
-        ]
+        assert saved_ingredient.fdc_id == 1
+        assert saved_ingredient.calories_kcal_per_100g == Decimal("52.00")
+        assert saved_ingredient.protein_g_per_100g == Decimal("0.26")
+        assert saved_ingredient.carb_g_per_100g == Decimal("13.81")
+        assert saved_ingredient.fat_g_per_100g == Decimal("0.17")
+        assert missing_ingredient is None
+        assert global_constant.current_foundation_food_page == expected_foundation_page + 1
+        assert global_constant.current_fndds_food_page == expected_fndds_page
 
     def test_fetch_food_by_fdc_id__returns_one_food(self) -> None:
         """It requests one abridged USDA food with required nutrients."""
