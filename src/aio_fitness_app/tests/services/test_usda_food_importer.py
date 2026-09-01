@@ -16,7 +16,7 @@ from aio_fitness_app.tests.base_test_class import BaselineRowsByModel, BaseTestC
 
 
 @pytest.mark.usefixtures("database_baseline")
-class TestUsdaFoodImporterDatabase(BaseTestClass):
+class TestUsdaFoodImporter(BaseTestClass):
     INITIAL_FOUNDATION_PAGE: ClassVar[int] = 2
     INITIAL_FNDDS_PAGE: ClassVar[int] = 3
 
