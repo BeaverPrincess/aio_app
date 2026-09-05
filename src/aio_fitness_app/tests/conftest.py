@@ -11,6 +11,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from psycopg import connect, sql
 from sqlalchemy import URL, create_engine, make_url
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from aio_fitness_app import create_app
 from aio_fitness_app.database import db
@@ -82,30 +83,32 @@ def database_app(migrated_test_database: URL) -> Iterator[Flask]:
 
 
 @pytest.fixture
-def database_transaction(database_app: Flask) -> Iterator[None]:
+def database_transaction(
+    database_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[None]:
     """Roll back all database changes made by one integration test."""
     connection = db.engine.connect()
     outer_transaction = connection.begin()
-
-    db.session.remove()
-    db.session.configure(
-        bind=connection,
-        join_transaction_mode="create_savepoint",
+    test_session = scoped_session(
+        sessionmaker(
+            bind=connection,
+            join_transaction_mode="create_savepoint",
+        )
     )
 
     try:
-        yield
+        with monkeypatch.context() as session_patch:
+            session_patch.setattr(db, "session", test_session)
+            try:
+                yield
+            finally:
+                test_session.remove()
     finally:
-        db.session.remove()
-
         try:
             outer_transaction.rollback()
         finally:
             connection.close()
-            db.session.configure(
-                bind=None,
-                join_transaction_mode="conditional_savepoint",
-            )
 
 
 @pytest.fixture

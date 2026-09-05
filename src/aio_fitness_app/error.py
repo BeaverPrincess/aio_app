@@ -8,3 +8,7 @@ class UsdaFoodApiRateLimitError(UsdaFoodApiError):
 
 class DishRequestValidationError(ValueError):
     """Raised when a create-dish request does not match the required JSON shape."""
+
+
+class DishValidationError(ValueError):
+    """Raised when dish data violates a business rule."""
