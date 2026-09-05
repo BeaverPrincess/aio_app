@@ -25,7 +25,6 @@ class TestUsdaFoodImporter(BaseTestClass):
         return {
             GlobalConstant: [
                 {
-                    "id": GLOBAL_CONSTANT_ROW_ID,
                     "current_foundation_food_page": 2,
                     "current_fndds_food_page": 3,
                 }
