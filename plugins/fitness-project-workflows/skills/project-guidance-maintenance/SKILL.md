@@ -5,7 +5,7 @@ description: Update this repository's AGENTS guidance, handoff state, skills, Co
 
 # Project guidance maintenance
 
-Read the root and applicable nested `AGENTS.md` files plus `docs/handoffs/project-state.md` before making a guidance change. Preserve active rules, current decisions, and the user's scope; do not turn one temporary request into permanent policy.
+Preserve active rules and current decisions; do not turn one temporary request into permanent policy.
 
 ## Classify the instruction first
 
@@ -19,6 +19,5 @@ Read the root and applicable nested `AGENTS.md` files plus `docs/handoffs/projec
 ## Editing rules
 
 - Keep root guidance short, non-duplicative, and limited to cross-project requirements.
-- When updating the handoff, replace it with compact current state. Keep exactly one handoff file and omit session history and superseded alternatives.
 - Give skills discriminating descriptions and include only non-obvious, reusable workflow detail. Do not move mandatory safety, privacy, or authorization constraints out of `AGENTS.md`.
 - For a plugin change, validate the plugin manifest and each changed skill before handoff.

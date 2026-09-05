@@ -5,7 +5,7 @@ description: Create or modify pytest tests for Python applications in this repos
 
 # Project pytest workflow
 
-Read the applicable application `AGENTS.md`, the root guidance, and the configured pytest settings before changing tests. Preserve the user-approved implementation scope; do not add production behavior merely to make a test convenient.
+Inspect the configured pytest settings and target code before changing tests. Do not add production behavior merely to make a test convenient.
 
 ## Test structure and naming
 
@@ -33,10 +33,7 @@ Use the repository's baseline-and-transaction pattern for every test class that 
 
 - Prefer direct `assert` statements, including for mock call data. Use mock-specific assertion methods only when a direct assertion is less clear.
 - Use `with patch(...)` inside the test method rather than a patch decorator.
+- Mock external network boundaries; tests must not call live services.
 - HTTP-only tests may use isolated in-memory SQLite configuration.
 - Tests that exercise models, migrations, or PostgreSQL-specific behavior must use a disposable PostgreSQL database, never the development database. Apply the complete Alembic schema once per pytest session; do not call `db.create_all()`.
 - The session-scoped infrastructure must migrate one disposable PostgreSQL database, remove each class baseline before the next class, and drop the database at session end.
-
-## Finish
-
-Run the repository's configured formatter, linter, type checker, and relevant pytest command. Report the commands and their outcomes.

@@ -8,6 +8,4 @@ This directory contains the repository Alembic environment and revisions. Before
 
 - Alembic is the only schema-management mechanism. Never use `db.create_all()` or runtime DDL as a substitute for a migration.
 - Treat Alembic autogeneration as a candidate. Inspect every generated revision and correct its operations, constraints, names, dependencies, upgrade path, and downgrade path before it is applied.
-- Keep migrations narrowly scoped to the approved schema change. Do not combine an unrelated cleanup, data backfill, or application refactor with a schema revision.
-- Do not read `.env` to run or validate a migration. When configuration is necessary, give the user the exact non-secret command to run locally.
 - Update affected SQLAlchemy models and migration-backed tests together, then use the project SQLAlchemy schema workflow.

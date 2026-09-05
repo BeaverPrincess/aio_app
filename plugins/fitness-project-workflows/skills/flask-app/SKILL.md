@@ -5,11 +5,12 @@ description: Build, structure, and test Flask 3.1 application features in this r
 
 # Flask application workflow
 
-Use the Flask version pinned in `requirements.txt`. Before making a Flask design decision, consult the latest compatible official Flask documentation.
+Use the Flask version pinned in `requirements.txt`; the references below are the baseline for framework-specific decisions.
 
 ## Application structure
 
 - Keep `create_app()` focused on configuration, extension initialization, error-handler registration, and blueprint registration.
+- Use Flask-SQLAlchemy for database integration.
 - Put HTTP views in `src/aio_fitness_app/web/`, grouped by domain. For example, USDA routes belong in `web/usda_food_routes.py`; ingredient and dish routes each receive their own module.
 - Create one blueprint per domain area, with its URL prefix defined on that blueprint.
 - Do not import the Flask application instance into a route module. Register blueprints from the application factory to avoid circular imports.
@@ -21,14 +22,12 @@ Use the Flask version pinned in `requirements.txt`. Before making a Flask design
 - Keep USDA HTTP calls in `UsdaFoodClient`. Put workflows that combine multiple client calls in a dedicated service.
 - Return JSON-compatible dictionaries or lists directly from Flask views when no custom response behavior is needed.
 - Translate expected application and upstream-service failures to consistent JSON error responses with appropriate HTTP status codes.
-- Do not add database writes, models, or migrations unless the user explicitly requests that scope.
 
 ## Testing
 
 - Test routes with Flask's test client and pytest.
-- Mock service boundaries in route tests; route tests must not make real external HTTP requests or require environment-variable values.
+- Mock service boundaries in route tests.
 - Test complex orchestration separately at the service layer.
-- After Python-source or test changes, run the repository's required quality checks.
 
 ## References
 
