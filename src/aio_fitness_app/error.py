@@ -4,3 +4,7 @@ class UsdaFoodApiError(RuntimeError):
 
 class UsdaFoodApiRateLimitError(UsdaFoodApiError):
     """Raised when the USDA FoodData Central API rate limit is exceeded."""
+
+
+class DishRequestValidationError(ValueError):
+    """Raised when a create-dish request does not match the required JSON shape."""
