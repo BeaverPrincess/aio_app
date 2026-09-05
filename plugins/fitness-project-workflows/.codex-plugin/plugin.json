@@ -1,18 +1,18 @@
 {
   "name": "fitness-project-workflows",
-  "version": "0.1.0+codex.20260905125306",
-  "description": "Shared workflows for the fitness project repository",
+  "version": "0.1.0+codex.20260905140738",
+  "description": "Shared backend and frontend workflows for the fitness project repository",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Fitness Project Workflows",
-    "shortDescription": "Shared Python, schema, and guidance workflows.",
-    "longDescription": "Reusable Codex workflows for Python development and typing, Flask features, testing, SQLAlchemy schema changes, external integrations, and project guidance in this repository.",
+    "shortDescription": "Shared backend, frontend, and guidance workflows.",
+    "longDescription": "Reusable Codex workflows for Python development and typing, Flask features, React development, routing, client data and forms, responsive UI, frontend tooling and testing, SQLAlchemy schema changes, external integrations, and project guidance in this repository.",
     "developerName": "Local developer",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Use the project pytest workflow to add a service test."
+    "defaultPrompt": "Use the React development workflow to implement a feature component."
   }
 }
